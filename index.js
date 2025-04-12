@@ -1,20 +1,19 @@
 require('dotenv').config()
+
 const express = require("express")
 const app = express()
 const cors = require("cors")
-app.use(express.static('dist'))
-
 const Person = require("./models/phonebook") 
-
 const morgan = require("morgan")
+
+app.use(express.static('dist'))
 app.use(express.json())
-
-
 app.use(cors())
+
 morgan.token('postData', (request) => {
     if (request.method == 'POST') return ' ' + JSON.stringify(request.body);
     else return ' ';
-  });
+});
   
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :postData'));
 
@@ -32,7 +31,7 @@ app.get("/info/", (req, res) => {
             <p>${date.toUTCString()}</p>`)
 })
 
-app.get("/api/persons/:id", (req, res) => {
+app.get("/api/persons/:id", (req, res, next) => {
     const id = req.params.id
     Person.findById(id)
         .then(person => {
@@ -42,12 +41,11 @@ app.get("/api/persons/:id", (req, res) => {
             res.json(person)
         })
         .catch(error => {
-            console.log(error)
-            res.status(400).send({ error: 'malformatted id' })
+            next(error)
         })
 })
 
-app.delete("/api/persons/:id", (req, res) => {
+app.delete("/api/persons/:id", (req, res, next) => {
     Person.findByIdAndDelete(req.params.id)
         .then(person => {
             if (!person) {
@@ -56,8 +54,7 @@ app.delete("/api/persons/:id", (req, res) => {
             res.status(204).end()
         })
         .catch(error => {
-            console.log(error)
-            res.status(400).send({ error: 'malformatted id' })
+           next(error)
         })
 })
 
@@ -92,6 +89,34 @@ app.post("/api/persons/", (req, res) => {
     }
     
 })
+
+app.put("/api/person/", (req, res, next) => {
+    Person.findOneAndUpdate({name: req.name})
+        .then(person => {
+            if(!person) {
+                return res.status(404).json({error: "name not found"}) 
+            }
+            person.number = req.number
+            return person.save()
+        })
+        .then(person => res.json(person).status(201).end())
+        .catch(error => next(error))
+})
+
+const unknownEndpoint = (req, res) => {
+    res.status(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
+
+const errorHandler = (err, req, res, next) => {
+    console.log(err)
+    if(err.name == "CastError") {
+        return res.status(400).send({ error: 'malformatted id' })
+    }
+}
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT)
