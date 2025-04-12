@@ -2,6 +2,8 @@ require('dotenv').config()
 const express = require("express")
 const app = express()
 const cors = require("cors")
+app.use(express.static('dist'))
+
 const Person = require("./models/phonebook") 
 
 const morgan = require("morgan")
