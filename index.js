@@ -6,7 +6,7 @@ const cors = require("cors")
 const Person = require("./models/phonebook") 
 const morgan = require("morgan")
 
-app.use(express.static('dist'))
+app.use(express.static("dist"))
 app.use(express.json())
 app.use(cors())
 
@@ -89,7 +89,6 @@ app.post("/api/persons/", (req, res) => {
     }
     
 })
-
 app.put("/api/persons/:id", (req, res, next) => {
     const { id } = req.params;
     const { name, number } = req.body;
