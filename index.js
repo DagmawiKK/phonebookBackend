@@ -20,6 +20,10 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :p
 
 app.get("/api/persons/", (req, res) => {
     Person.find({}).then(result => res.json(result))
+                .catch(error => {
+                    console.log(error)
+                    res.status(500).end()
+                })
 })
 
 app.get("/info/", (req, res) => {
@@ -32,10 +36,14 @@ app.get("/api/persons/:id", (req, res) => {
     const id = req.params.id
     Person.findById(id)
         .then(person => {
-            if(!Person) {
+            if(!person) {
                 return res.status(404).json({error: "Contact not found"})
             }
             res.json(person)
+        })
+        .catch(error => {
+            console.log(error)
+            res.status(400).send({ error: 'malformatted id' })
         })
 })
 
@@ -47,9 +55,11 @@ app.delete("/api/persons/:id", (req, res) => {
             }
             res.status(204).end()
         })
+        .catch(error => {
+            console.log(error)
+            res.status(400).send({ error: 'malformatted id' })
+        })
 })
-
-const generateID = () => String(Math.floor(Math.random() * 100000) )
 
 app.post("/api/persons/", (req, res) => {
     const body = req.body
@@ -60,20 +70,24 @@ app.post("/api/persons/", (req, res) => {
         return res.status(400).json({error: "Number not entered"}).end()
     }
     else {
-        Person.find({})
-            .then(result => {
-                return result.some(person => person.name == body.name)
-            })
-            .then(found => {
-                if(found) {
+        Person.findOne({name: body.name})
+            .then(exists => {
+                if (exists) {
                     return res.status(400).json({error: "name must be unique"}).end()
                 }
+
                 const newPerson = new Person({
                     name: body.name,
                     number: body.number
                 })
             
-                newPerson.save().then(result => res.status(201).json(result).end("added user"))
+                return newPerson.save()
+                
+            })
+            .then(result => res.status(201).json(result).end("added user"))
+            .catch(error => {
+                console.log(error)
+                res.status(500).end()
             })
     }
     
