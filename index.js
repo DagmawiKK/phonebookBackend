@@ -1,10 +1,12 @@
+require('dotenv').config()
 const express = require("express")
 const app = express()
 const cors = require("cors")
+const Person = require("./models/phonebook") 
 
 const morgan = require("morgan")
 app.use(express.json())
-app.use(express.static('dist'))
+
 
 app.use(cors())
 morgan.token('postData', (request) => {
@@ -14,31 +16,10 @@ morgan.token('postData', (request) => {
   
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :postData'));
 
-let persons = [
-    { 
-      "id": "1",
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": "2",
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": "3",
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": "4",
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
+console.log("sdsjk")
 
-app.get("/api/persons", (req, res) => {
-    res.json(persons)
+app.get("/api/persons/", (req, res) => {
+    Person.find({}).then(result => res.json(result))
 })
 
 app.get("/info/", (req, res) => {
@@ -49,13 +30,13 @@ app.get("/info/", (req, res) => {
 
 app.get("/api/persons/:id", (req, res) => {
     const id = req.params.id
-    const contact = persons.find(p => p.id == id)
-
-    if(!contact) {
-        return res.status(404).json({error: "Contact not found"})
-    }
-    res.json(contact)
-
+    Person.findById(id)
+        .then(person => {
+            if(!Person) {
+                return res.status(404).json({error: "Contact not found"})
+            }
+            res.json(person)
+        })
 })
 
 app.delete("/api/persons/:id", (req, res) => {
@@ -75,20 +56,23 @@ app.post("/api/persons/", (req, res) => {
         return res.status(400).json({error: "Number not entered"}).end()
     }
     else {
-        const found = persons.some(person => person.name === body.name)
-        if(found) {
-            return res.status(400).json({error: "name must be unique"}).end()
-        }
+        Person.find({})
+            .then(result => {
+                return result.some(person => person.name == body.name)
+            })
+            .then(found => {
+                if(found) {
+                    return res.status(400).json({error: "name must be unique"}).end()
+                }
+                const newPerson = new Person({
+                    name: body.name,
+                    number: body.number
+                })
+            
+                newPerson.save().then(result => res.status(201).json(result).end("added user"))
+            })
     }
-
-    const newPerson = {
-        "id": generateID(),
-        "name" : body.name,
-        "number" : body.number,
-    }
-
-    persons = persons.concat(newPerson)
-    res.status(201).json(newPerson).end()
+    
 })
 
 const PORT = process.env.PORT || 3001
