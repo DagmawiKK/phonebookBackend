@@ -17,7 +17,7 @@ morgan.token('postData', (request) => {
   
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :postData'));
 
-app.get("/api/persons/", (req, res) => {
+app.get("/api/persons", (req, res) => {
     Person.find({}).then(result => res.json(result))
                 .catch(error => {
                     console.log(error)
@@ -25,9 +25,9 @@ app.get("/api/persons/", (req, res) => {
                 })
 })
 
-app.get("/info/", (req, res) => {
+app.get("/info", (req, res) => {
     const date = new Date()
-    res.send(`<p>Phonebook has info for ${persons.length} people</p>
+    res.send(`<p>Phonebook has info for ${Person.countDocuments({})} people</p>
             <p>${date.toUTCString()}</p>`)
 })
 
@@ -58,7 +58,7 @@ app.delete("/api/persons/:id", (req, res, next) => {
         })
 })
 
-app.post("/api/persons/", (req, res) => {
+app.post("/api/persons", (req, res, next) => {
     const body = req.body
     if(!body.name) {
         return res.status(400).json({error: "Name not entered"}).end()
@@ -83,8 +83,7 @@ app.post("/api/persons/", (req, res) => {
             })
             .then(result => res.status(201).json(result).end("added user"))
             .catch(error => {
-                console.log(error)
-                res.status(500).end()
+                next(error)
             })
     }
     
@@ -115,7 +114,9 @@ app.use(unknownEndpoint)
 const errorHandler = (err, req, res, next) => {
     console.log(err)
     if(err.name == "CastError") {
-        return res.status(400).send({ error: 'malformatted id' })
+        return res.status(400).json({ error: 'malformatted id' })
+    } else if(err.name == "ValidationError") {
+        return res.status(400).json({ error: err.message})
     }
 }
 

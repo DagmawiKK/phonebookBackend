@@ -9,8 +9,19 @@ mongoose.connect(url)
     .catch(error => console.log("Error while connecting: ", error))
 
 const personSchema = new mongoose.Schema({
-    name: String,
-    number: Number
+    name: {
+        type: String,
+        minLength: 3,
+        required: true,
+    },
+    number: {
+        type: String,
+        validate : {
+            validator: (v) => /^\d{1,4}-\d{7,12}$/.test(v),
+            message: props => `${props.value} is not valid number`
+        },
+        required: true
+    } 
 })
 
 
