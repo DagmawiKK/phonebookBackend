@@ -91,13 +91,12 @@ app.post("/api/persons/", (req, res) => {
 })
 
 app.put("/api/person/", (req, res, next) => {
-    Person.findOneAndUpdate({name: req.body.name})
+    Person.findOneAndUpdate({name: req.body.name, number: req.body.number})
         .then(person => {
             if(!person) {
                 return res.status(404).json({error: "name not found"}) 
             }
-            person.number = req.body.number
-            return person.save()
+            return person
         })
         .then(person => res.json(person).status(201).end())
         .catch(error => next(error))
