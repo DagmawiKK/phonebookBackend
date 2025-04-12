@@ -40,9 +40,13 @@ app.get("/api/persons/:id", (req, res) => {
 })
 
 app.delete("/api/persons/:id", (req, res) => {
-    const id = req.params.id
-    persons = persons.filter(p => p.id != id)
-    res.status(204).end()
+    Person.findByIdAndDelete(req.params.id)
+        .then(person => {
+            if (!person) {
+                return res.status(404).json({error: "person not found"})
+            }
+            res.status(204).end()
+        })
 })
 
 const generateID = () => String(Math.floor(Math.random() * 100000) )
