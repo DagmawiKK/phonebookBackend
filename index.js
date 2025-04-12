@@ -18,8 +18,6 @@ morgan.token('postData', (request) => {
   
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :postData'));
 
-console.log("sdsjk")
-
 app.get("/api/persons/", (req, res) => {
     Person.find({}).then(result => res.json(result))
 })
