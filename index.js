@@ -96,7 +96,7 @@ app.put("/api/person/", (req, res, next) => {
             if(!person) {
                 return res.status(404).json({error: "name not found"}) 
             }
-            person.number = req.number
+            person.number = req.body.number
             return person.save()
         })
         .then(person => res.json(person).status(201).end())
